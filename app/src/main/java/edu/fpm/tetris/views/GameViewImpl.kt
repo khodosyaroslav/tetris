@@ -29,7 +29,19 @@ class GameViewImpl(
 
     override fun setStatus(status: GameStatus) {
         gameStatusText.text = status.value
-        gameStatusText.visibility = if (status == GameStatus.PLAYING) View.INVISIBLE else View.VISIBLE
+        gameStatusText.visibility =
+            if (status == GameStatus.PLAYING) View.INVISIBLE else View.VISIBLE
         gameControlButton.text = if (status == GameStatus.PLAYING) "Pause" else "Start"
+    }
+
+    companion object {
+        fun newInstance(
+            gameFrame: GameFrame,
+            gameScoreText: TextView,
+            gameStatusText: TextView,
+            gameControlButton: Button
+        ): GameView {
+            return GameViewImpl(gameFrame, gameScoreText, gameStatusText, gameControlButton)
+        }
     }
 }
