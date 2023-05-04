@@ -38,6 +38,10 @@ class GameFrame : View {
         return points[y][x]
     }
 
+    fun setPoints(points: Array<Array<Point>>) {
+        this.points = points
+    }
+
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         paint.color = Color.BLACK
