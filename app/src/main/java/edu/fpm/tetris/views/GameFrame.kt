@@ -46,7 +46,9 @@ class GameFrame : View {
         super.onDraw(canvas)
         paint.color = Color.BLACK
         canvas?.drawRect(0F, 0F, gameSize.toFloat(), gameSize.toFloat(), paint)
-
+        if (!::points.isInitialized) {
+            return
+        }
         for (i in 0 until gameSize) {
             for (j in 0 until gameSize) {
                 val point: Point = getPoint(i, j)

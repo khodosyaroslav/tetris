@@ -9,15 +9,29 @@ import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
-class GameModelImp : GameModel {
+class GameModelImpl() : GameModel {
     private val GAME_SIZE = 15
     private val PLAYING_AREA_WIDTH = 10
     private val PLAYING_AREA_HEIGHT = GAME_SIZE
     private val UPCOMING_AREA_SIZE = 4
 
-    private lateinit var points: Array<Array<Point>>
-    private lateinit var playingPoints: Array<Array<Point>>
-    private lateinit var upcomingPoints: Array<Array<Point>>
+    private var points: Array<Array<Point>> = Array(GAME_SIZE) { row ->
+        Array(GAME_SIZE) { col ->
+            Point(row, col)
+        }
+    }
+
+    private var playingPoints: Array<Array<Point>> = Array(PLAYING_AREA_HEIGHT) { row ->
+        Array(PLAYING_AREA_WIDTH) { col ->
+            Point(row, col)
+        }
+    }
+
+    private var upcomingPoints: Array<Array<Point>> = Array(UPCOMING_AREA_SIZE) { row ->
+        Array(UPCOMING_AREA_SIZE) { col ->
+            Point(row, col)
+        }
+    }
 
     private var score: Int = 0
     private val isGamePaused = AtomicBoolean()
