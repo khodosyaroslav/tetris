@@ -43,11 +43,11 @@ class GamePresenter {
         gameModel.pauseGame()
     }
 
-    private fun setStatus(status: GameStatus) {
-        if (this.status == GameStatus.GAME_OVER || this.status == GameStatus.START) {
+    private fun setStatus(newStatus: GameStatus) {
+        if (status == GameStatus.GAME_OVER || status == GameStatus.START) {
             gameModel.newGame()
         }
-        this.status = status
-        gameView.setStatus(status)
+        status = newStatus
+        gameView.setStatus(newStatus)
     }
 }

@@ -1,11 +1,6 @@
 package edu.fpm.tetris.presenters
 
 interface GameModel {
-    val FPS: Int
-        get() = 60
-    val SPEED: Int
-        get() = 25
-
     fun init()
     val gameSize: Int
 
@@ -15,4 +10,9 @@ interface GameModel {
     fun turn(turn: GameTurn)
     fun setGameOverListener(onGameOverListener: () -> Unit)
     fun setScoreUpdatedListener(onScoreUpdatedListener: (Int) -> Unit)
+
+    companion object {
+        const val FPS = 60
+        const val SPEED = 25
+    }
 }

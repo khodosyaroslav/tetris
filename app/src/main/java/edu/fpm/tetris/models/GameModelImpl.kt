@@ -9,42 +9,19 @@ import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.random.Random
 
-class GameModelImpl() : GameModel {
-    private val GAME_SIZE = 15
-    private val PLAYING_AREA_WIDTH = 10
-    private val PLAYING_AREA_HEIGHT = GAME_SIZE
-    private val UPCOMING_AREA_SIZE = 4
-
-    private var points: Array<Array<Point>> = Array(GAME_SIZE) { row ->
-        Array(GAME_SIZE) { col ->
-            Point(row, col)
-        }
-    }
-
-    private var playingPoints: Array<Array<Point>> = Array(PLAYING_AREA_HEIGHT) { row ->
-        Array(PLAYING_AREA_WIDTH) { col ->
-            Point(row, col)
-        }
-    }
-
-    private var upcomingPoints: Array<Array<Point>> = Array(UPCOMING_AREA_SIZE) { row ->
-        Array(UPCOMING_AREA_SIZE) { col ->
-            Point(row, col)
-        }
-    }
+class GameModelImpl : GameModel {
+    private lateinit var points: Array<Array<Point>>
+    private lateinit var playingPoints: Array<Array<Point?>>
+    private lateinit var upcomingPoints: Array<Array<Point?>>
 
     private var score: Int = 0
     private val isGamePaused = AtomicBoolean()
     private val isTurning = AtomicBoolean()
-    private val fallingPoints = LinkedList<Point>()
+    private val fallingPoints = LinkedList<Point?>()
 
+    private var gameOverObserver: (() -> Unit)? = null
+    private var scoreUpdatedObserver: ((Int) -> Unit)? = null
     private val handler: Handler = Handler()
-
-    private var _gameOverObserver: (() -> Unit)? = null
-    val gameOverObserver = _gameOverObserver
-
-    private var _scoreUpdatedObserver: ((Int) -> Unit)? = null
-    val scoreUpdatedObserver = _scoreUpdatedObserver
 
     private enum class BrickType(val value: Int) {
         L(0), T(1), S(2), I(3), O(4);
@@ -61,23 +38,24 @@ class GameModelImpl() : GameModel {
                 }
             }
 
-            fun random(): BrickType {
-                return fromValue(Random.nextInt(5))
-            }
+            fun random(): BrickType = fromValue(Random.nextInt(5))
         }
     }
 
     override fun init() {
+        points = Array(GAME_SIZE) { row -> Array(GAME_SIZE) { col -> Point(row, col) } }
         for (i in 0 until GAME_SIZE) {
             for (j in 0 until GAME_SIZE) {
                 points[i][j] = Point(j, i)
             }
         }
 
+        playingPoints = Array(PLAYING_AREA_HEIGHT) { arrayOfNulls(PLAYING_AREA_WIDTH) }
         for (i in 0 until PLAYING_AREA_HEIGHT) {
             System.arraycopy(points[i], 0, playingPoints[i], 0, PLAYING_AREA_WIDTH)
         }
 
+        upcomingPoints = Array(UPCOMING_AREA_SIZE) { arrayOfNulls(UPCOMING_AREA_SIZE) }
         for (i in 0 until UPCOMING_AREA_SIZE) {
             for (j in 0 until UPCOMING_AREA_SIZE) {
                 upcomingPoints[i][j] = points[i + 1][j + 1 + PLAYING_AREA_WIDTH]
@@ -98,7 +76,7 @@ class GameModelImpl() : GameModel {
         score = 0
         for (i in 0 until PLAYING_AREA_HEIGHT) {
             for (j in 0 until PLAYING_AREA_WIDTH) {
-                playingPoints[i][j].type = PointType.EMPTY
+                playingPoints[i][j]!!.type = PointType.EMPTY
             }
         }
         fallingPoints.clear()
@@ -109,50 +87,50 @@ class GameModelImpl() : GameModel {
         val upcomingBrick: BrickType = BrickType.random()
         for (i in 0 until UPCOMING_AREA_SIZE) {
             for (j in 0 until UPCOMING_AREA_SIZE) {
-                upcomingPoints[i][j].type = PointType.EMPTY
+                upcomingPoints[i][j]!!.type = PointType.EMPTY
             }
         }
         when (upcomingBrick) {
             BrickType.L -> {
-                upcomingPoints[1][1].type = PointType.BOX
-                upcomingPoints[2][1].type = PointType.BOX
-                upcomingPoints[3][1].type = PointType.BOX
-                upcomingPoints[3][2].type = PointType.BOX
+                upcomingPoints[1][1]!!.type = PointType.BOX
+                upcomingPoints[2][1]!!.type = PointType.BOX
+                upcomingPoints[3][1]!!.type = PointType.BOX
+                upcomingPoints[3][2]!!.type = PointType.BOX
             }
 
             BrickType.T -> {
-                upcomingPoints[1][1].type = PointType.BOX
-                upcomingPoints[2][1].type = PointType.BOX
-                upcomingPoints[2][2].type = PointType.BOX
-                upcomingPoints[3][1].type = PointType.BOX
+                upcomingPoints[1][1]!!.type = PointType.BOX
+                upcomingPoints[2][1]!!.type = PointType.BOX
+                upcomingPoints[2][2]!!.type = PointType.BOX
+                upcomingPoints[3][1]!!.type = PointType.BOX
             }
 
             BrickType.S -> {
-                upcomingPoints[1][1].type = PointType.BOX
-                upcomingPoints[2][1].type = PointType.BOX
-                upcomingPoints[2][2].type = PointType.BOX
-                upcomingPoints[3][2].type = PointType.BOX
+                upcomingPoints[1][1]!!.type = PointType.BOX
+                upcomingPoints[2][1]!!.type = PointType.BOX
+                upcomingPoints[2][2]!!.type = PointType.BOX
+                upcomingPoints[3][2]!!.type = PointType.BOX
             }
 
             BrickType.I -> {
-                upcomingPoints[0][1].type = PointType.BOX
-                upcomingPoints[1][1].type = PointType.BOX
-                upcomingPoints[2][1].type = PointType.BOX
-                upcomingPoints[3][1].type = PointType.BOX
+                upcomingPoints[0][1]!!.type = PointType.BOX
+                upcomingPoints[1][1]!!.type = PointType.BOX
+                upcomingPoints[2][1]!!.type = PointType.BOX
+                upcomingPoints[3][1]!!.type = PointType.BOX
             }
 
             BrickType.O -> {
-                upcomingPoints[1][1].type = PointType.BOX
-                upcomingPoints[2][1].type = PointType.BOX
-                upcomingPoints[1][2].type = PointType.BOX
-                upcomingPoints[2][2].type = PointType.BOX
+                upcomingPoints[1][1]!!.type = PointType.BOX
+                upcomingPoints[2][1]!!.type = PointType.BOX
+                upcomingPoints[1][2]!!.type = PointType.BOX
+                upcomingPoints[2][2]!!.type = PointType.BOX
             }
         }
     }
 
     override fun startGame(onGameDrawnListener: (Array<Array<Point>>) -> Unit) {
         isGamePaused.set(false)
-        val sleepTime = (1000 / FPS).toLong()
+        val sleepTime = (1000 / GameModel.FPS).toLong()
         Thread {
             var count: Long = 0
             while (!isGamePaused.get()) {
@@ -161,7 +139,7 @@ class GameModelImpl() : GameModel {
                 } catch (e: InterruptedException) {
                     e.printStackTrace()
                 }
-                if (count % SPEED == 0L) {
+                if (count % GameModel.SPEED == 0L) {
                     if (isTurning.get()) {
                         continue
                     }
@@ -174,22 +152,22 @@ class GameModelImpl() : GameModel {
     }
 
     @Synchronized
-    private fun next() {
+    private operator fun next() {
         updateFallingPoints()
 
-        if (isNextMerged()) {
-            if (isOutSide()) {
-                if (_gameOverObserver != null) {
+        if (isNextMerged) {
+            if (isOutSide) {
+                if (gameOverObserver != null) {
                     handler.post { gameOverObserver }
                 }
                 isGamePaused.set(true)
                 return
             }
 
-            var y: Int = fallingPoints.stream().mapToInt { p -> p.y }.max().orElse(-1)
+            var y: Int = fallingPoints.stream().mapToInt { p -> p!!.y }.max().orElse(-1)
             while (y >= 0) {
-                var isScored: Boolean = true
-                for (i in 0 until PLAYING_AREA_HEIGHT) {
+                var isScored = true
+                for (i in 0 until PLAYING_AREA_WIDTH) {
                     val point = getPlayingPoint(i, y)
                     if (point?.type == PointType.EMPTY) {
                         isScored = false
@@ -197,9 +175,9 @@ class GameModelImpl() : GameModel {
                     }
                 }
                 if (isScored) {
-                    score++;
-                    if (_scoreUpdatedObserver != null) {
-                        handler.post { scoreUpdatedObserver?.invoke(score) }
+                    score++
+                    if (scoreUpdatedObserver != null) {
+                        handler.post { scoreUpdatedObserver!!.invoke(score) }
                     }
 
                     val tmPoints = LinkedList<Point>()
@@ -219,55 +197,44 @@ class GameModelImpl() : GameModel {
                     y--
                 }
             }
-            fallingPoints.forEach { p -> p.isFallingPoint = false }
+            fallingPoints.forEach { p -> p!!.isFallingPoint = false }
             fallingPoints.clear()
         } else {
             val tmPoints = LinkedList<Point>()
             for (fallingPoint in fallingPoints) {
-                fallingPoint.type = PointType.EMPTY
+                fallingPoint!!.type = PointType.EMPTY
                 fallingPoint.isFallingPoint = false
-                tmPoints.add(Point(fallingPoint.x, fallingPoint.y, true, PointType.BOX))
+                tmPoints.add(Point(fallingPoint.x, fallingPoint.y + 1, true, PointType.BOX))
             }
             fallingPoints.clear()
             fallingPoints.addAll(tmPoints)
-            fallingPoints.forEach(this::updatePlayingPoint)
+            fallingPoints.forEach { point -> updatePlayingPoint(point) }
         }
     }
 
-    private fun updateFallingPoints() {
-        if (fallingPoints.isEmpty()) {
-            for (i in 0 until UPCOMING_AREA_SIZE) {
-                for (j in 0 until UPCOMING_AREA_SIZE) {
-                    if (upcomingPoints[i][j].type == PointType.BOX) {
-                        fallingPoints.add(Point(j + 3, i - 4, true, PointType.BOX))
-                    }
+    private val isNextMerged: Boolean
+        get() {
+            for (fallingPoint in fallingPoints) {
+                if (fallingPoint!!.y + 1 >= 0 && (fallingPoint.y == PLAYING_AREA_HEIGHT - 1 ||
+                            getPlayingPoint(fallingPoint.x, fallingPoint.y + 1)?.isStablePoint!!)
+                )
+                    return true
+            }
+            return false
+        }
+
+    private val isOutSide: Boolean
+        get() {
+            for (fallingPoint in fallingPoints) {
+                if (fallingPoint!!.y < 0) {
+                    return true
                 }
             }
-            generateUpcomingBrick()
+            return false
         }
-    }
 
-    private fun isNextMerged(): Boolean {
-        for (fallingPoint in fallingPoints) {
-            if (fallingPoint.y + 1 >= 0 && (fallingPoint.y == PLAYING_AREA_HEIGHT - 1 ||
-                        getPlayingPoint(fallingPoint.x, fallingPoint.y + 1)?.isStablePoint!!)
-            )
-                return true
-        }
-        return false
-    }
-
-    private fun isOutSide(): Boolean {
-        for (fallingPoint in fallingPoints) {
-            if (fallingPoint.y < 0) {
-                return true
-            }
-        }
-        return false
-    }
-
-    private fun updatePlayingPoint(point: Point) {
-        if (point.x in 0 until PLAYING_AREA_WIDTH && point.y in 0 until PLAYING_AREA_HEIGHT) {
+    private fun updatePlayingPoint(point: Point?) {
+        if (point!!.x in 0 until PLAYING_AREA_WIDTH && point.y in 0 until PLAYING_AREA_HEIGHT) {
             points[point.y][point.x] = point
             playingPoints[point.y][point.x] = point
         }
@@ -275,9 +242,20 @@ class GameModelImpl() : GameModel {
 
     private fun getPlayingPoint(x: Int, y: Int): Point? {
         return if (x >= 0 && y >= 0 && x < PLAYING_AREA_WIDTH && y < PLAYING_AREA_HEIGHT) {
-            points[y][x];
-        } else {
-            null
+            points[y][x]
+        } else null
+    }
+
+    private fun updateFallingPoints() {
+        if (fallingPoints.isEmpty()) {
+            for (i in 0 until UPCOMING_AREA_SIZE) {
+                for (j in 0 until UPCOMING_AREA_SIZE) {
+                    if (upcomingPoints[i][j]!!.type == PointType.BOX) {
+                        fallingPoints.add(Point(j + 3, i - 4, true, PointType.BOX))
+                    }
+                }
+            }
+            generateUpcomingBrick()
         }
     }
 
@@ -290,10 +268,17 @@ class GameModelImpl() : GameModel {
     }
 
     override fun setGameOverListener(onGameOverListener: () -> Unit) {
-        _gameOverObserver = onGameOverListener
+        gameOverObserver = onGameOverListener
     }
 
     override fun setScoreUpdatedListener(onScoreUpdatedListener: (Int) -> Unit) {
-        _scoreUpdatedObserver = onScoreUpdatedListener
+        scoreUpdatedObserver = onScoreUpdatedListener
+    }
+
+    companion object {
+        private const val GAME_SIZE = 15
+        private const val PLAYING_AREA_WIDTH = 10
+        private const val PLAYING_AREA_HEIGHT = GAME_SIZE
+        private const val UPCOMING_AREA_SIZE = 4
     }
 }

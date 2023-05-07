@@ -42,10 +42,10 @@ class GameFrame : View {
         this.points = points
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         paint.color = Color.BLACK
-        canvas?.drawRect(0F, 0F, gameSize.toFloat(), gameSize.toFloat(), paint)
+        canvas.drawRect(0F, 0F, gameSize.toFloat(), gameSize.toFloat(), paint)
         if (!::points.isInitialized) {
             return
         }
@@ -87,7 +87,7 @@ class GameFrame : View {
                         paint.color = Color.BLACK
                     }
                 }
-                canvas?.drawRect(
+                canvas.drawRect(
                     left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat(), paint
                 )
             }

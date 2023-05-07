@@ -11,7 +11,6 @@ import edu.fpm.tetris.presenters.GameTurn
 import edu.fpm.tetris.views.GameFrame
 import edu.fpm.tetris.views.GameViewImpl
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
