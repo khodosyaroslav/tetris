@@ -158,7 +158,7 @@ class GameModelImpl : GameModel {
         if (isNextMerged) {
             if (isOutSide) {
                 if (gameOverObserver != null) {
-                    handler.post { gameOverObserver }
+                    handler.post { gameOverObserver!!.invoke() }
                 }
                 isGamePaused.set(true)
                 return
