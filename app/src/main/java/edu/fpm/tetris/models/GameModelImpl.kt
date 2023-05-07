@@ -264,7 +264,82 @@ class GameModelImpl : GameModel {
     }
 
     override fun turn(turn: GameTurn) {
+        if (isGamePaused.get() || isTurning.get()) {
+            return
+        }
 
+        isTurning.set(true)
+        val tmPoints: LinkedList<Point?>
+        var canTurn: Boolean
+        when (turn) {
+            GameTurn.LEFT -> {
+                updateFallingPoints()
+                canTurn = true
+                for (fallingPoint in fallingPoints) {
+                    if (fallingPoint!!.y >= 0 && (fallingPoint.x == 0 ||
+                                getPlayingPoint(fallingPoint.x - 1, fallingPoint.y)!!.isStablePoint)
+                    ) {
+                        canTurn = false
+                        break
+                    }
+                }
+                if (canTurn) {
+                    tmPoints = LinkedList()
+                    for (fallingPoint in fallingPoints) {
+                        tmPoints.add(
+                            Point(
+                                fallingPoint!!.x - 1,
+                                fallingPoint.y,
+                                true,
+                                PointType.BOX
+                            )
+                        )
+                        fallingPoint.type = PointType.EMPTY
+                        fallingPoint.isFallingPoint = false
+                    }
+                    fallingPoints.clear()
+                    fallingPoints.addAll(tmPoints)
+                    fallingPoints.forEach(this::updatePlayingPoint)
+                }
+            }
+
+            GameTurn.RIGHT -> {
+                updateFallingPoints()
+                canTurn = true
+                for (fallingPoint in fallingPoints) {
+                    if (fallingPoint!!.y >= 0 && (fallingPoint.x == PLAYING_AREA_WIDTH - 1 ||
+                                getPlayingPoint(fallingPoint.x + 1, fallingPoint.y)!!.isStablePoint)
+                    ) {
+                        canTurn = false
+                        break
+                    }
+                }
+                if (canTurn) {
+                    tmPoints = LinkedList()
+                    for (fallingPoint in fallingPoints) {
+                        tmPoints.add(
+                            Point(fallingPoint!!.x + 1, fallingPoint.y, true, PointType.BOX)
+                        )
+                        fallingPoint.type = PointType.EMPTY
+                        fallingPoint.isFallingPoint = false
+                    }
+                    fallingPoints.clear()
+                    fallingPoints.addAll(tmPoints)
+                    fallingPoints.forEach(this::updatePlayingPoint)
+                }
+            }
+
+            GameTurn.DOWN -> next()
+
+            GameTurn.ROTATE -> {
+
+            }
+
+            GameTurn.UP -> {
+
+            }
+        }
+        isTurning.set(false)
     }
 
     override fun setGameOverListener(onGameOverListener: () -> Unit) {
