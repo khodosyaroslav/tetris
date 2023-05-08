@@ -35,9 +35,6 @@ class MainActivity : AppCompatActivity() {
             )
         )
 
-        val upButton = binding.btnUp
-        upButton.setOnClickListener { gamePresenter.turn(GameTurn.UP) }
-
         val downButton = binding.btnDown
         downButton.setOnClickListener { gamePresenter.turn(GameTurn.DOWN) }
 

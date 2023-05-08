@@ -334,9 +334,6 @@ class GameModelImpl : GameModel {
 
             GameTurn.ROTATE -> rotateFallingPoints()
 
-            GameTurn.UP -> {
-
-            }
         }
         isTurning.set(false)
     }
