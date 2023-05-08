@@ -47,6 +47,9 @@ class MainActivity : AppCompatActivity() {
         val rightButton = binding.btnRight
         rightButton.setOnClickListener { gamePresenter.turn(GameTurn.RIGHT) }
 
+        val rotateButton = binding.btnRotate
+        rotateButton.setOnClickListener { gamePresenter.turn(GameTurn.ROTATE) }
+
         controlButton.setOnClickListener { gamePresenter.changeStatus() }
 
         gamePresenter.init()
