@@ -7,6 +7,7 @@ import edu.fpm.tetris.presenters.Point
 import edu.fpm.tetris.presenters.PointType
 import java.util.LinkedList
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.max
 import kotlin.random.Random
 
 class GameModelImpl : GameModel {
@@ -331,15 +332,82 @@ class GameModelImpl : GameModel {
 
             GameTurn.DOWN -> next()
 
-            GameTurn.ROTATE -> {
-
-            }
+            GameTurn.ROTATE -> rotateFallingPoints()
 
             GameTurn.UP -> {
 
             }
         }
         isTurning.set(false)
+    }
+
+    private fun rotateFallingPoints() {
+        updateFallingPoints()
+        val left = fallingPoints.stream().mapToInt { p -> p!!.x }.min().orElse(-1)
+        val right = fallingPoints.stream().mapToInt { p -> p!!.x }.max().orElse(-1)
+        val top = fallingPoints.stream().mapToInt { p -> p!!.y }.min().orElse(-1)
+        val bottom = fallingPoints.stream().mapToInt { p -> p!!.y }.max().orElse(-1)
+        val size = max(right - left, bottom - top) + 1
+        if(rotatePoints(left, top, size)) {
+            return
+        }
+        if(rotatePoints(right - size + 1, top, size)) {
+            return
+        }
+        if(rotatePoints(left, bottom - size + 1, size)) {
+            return
+        }
+        rotatePoints(right - size + 1, bottom - size + 1, size)
+    }
+
+    private fun rotatePoints(x: Int, y: Int, size: Int): Boolean {
+        if (x + size - 1 < 0 || x + size - 1 >= PLAYING_AREA_WIDTH) {
+            return false
+        }
+        var canRotate = true
+        val points = Array(size) { arrayOfNulls<Point>(size) }
+        for (i in 0 until size) {
+            for (j in 0 until size) {
+                var point = getPlayingPoint(j + x, i + y)
+                if (point == null) {
+                    val tmX = j + x
+                    val tmY = i + y
+                    point = fallingPoints.stream()
+                        .filter { p -> p!!.x == tmX && p.y == tmY }
+                        .findFirst()
+                        .orElse(Point(j + x, i + y))
+                }
+                if (point!!.isStablePoint &&
+                    getPlayingPoint(x + size - 1 - i, y + j)!!.isFallingPoint
+                ) {
+                    canRotate = false
+                    break
+                }
+                points[i][j] = Point(x + size - 1 - i, y + j, point.isFallingPoint, point.type)
+            }
+            if (!canRotate) {
+                break
+            }
+        }
+        if (!canRotate) {
+            return false
+        }
+        for (i in 0 until size) {
+            for (j in 0 until size) {
+                val point = getPlayingPoint(i + y, j + x) ?: continue
+                point.type = PointType.EMPTY
+            }
+        }
+        fallingPoints.clear()
+        for (i in 0 until size) {
+            for (j in 0 until size) {
+                updatePlayingPoint(points[i][j])
+                if (points[i][j]!!.isFallingPoint) {
+                    fallingPoints.add(points[i][j])
+                }
+            }
+        }
+        return true
     }
 
     override fun setGameOverListener(onGameOverListener: () -> Unit) {
